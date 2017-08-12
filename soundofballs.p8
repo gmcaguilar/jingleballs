@@ -2,9 +2,8 @@ pico-8 cartridge // http://www.pico-8.co
 version 8
 __lua__
 
---todo: move reference point ball to center
 --todo: randomize hole lights using timer
---todo: add "open hole" feature
+--todo: add "open hole with keystrokes" feature
 --todo: point system
 --todo: add "good" music
 --todo: add "bad" music
@@ -13,55 +12,71 @@ __lua__
 
 function _init()
  ballx = 64
- bally = 119
+ bally = 44
  balldx = 5
  balldy = -5
  gravity = 0.5
- on_ground = true
+ on_ground = false
  holes = {false,false,false,true,false,false,false,false}
+ ball_inside_hole = false
+ t=0
 end
 
-function _update()
- 
- hit_edge()
- hole_location()
- move_ball()
 
- 
+function _update()
+ t += 1
+ hit_edge()
+ move_ball()
+ hole_location()
+ if t%2 == 0 then
+  pal(4,flr(rnd(2)+14))
+ end
 end
 
 
 function _draw()
  cls()
  map(0,0,0,0,16,16)
- 
+ hole_light()
+ spr(1,ballx,bally)
+end
+
+
+
+function hole_light()
+
  for a = 1, 8 do 
   if holes[a] then
    spr(7,(a-1)*16,122,2,5)
   end
  end
- spr(1,ballx,bally)
 end
 
 function hole_location()
  for a = 1, 8 do 
-  if holes[a] then 
-   if ballx + 4 > (a-1)*16 and ballx + 4 < ((a-1)*16 )+16 and on_ground then
-    holes[a] = false
-   -- player gets one point
-    random_num = flr(rnd(8)) + 1
-    holes[random_num] = true
-    break
-   else
-    _init()
+   if on_ground then
+    if not ball_inside_hole then
+     if holes[a] and ballx + 4 >= (a-1)*16 and ballx + 4 <= ((a-1)*16 )+16 then
+      holes[a] = false
+     -- player gets one point
+      random_num = flr(rnd(8)) + 1
+      holes[random_num] = true
+      ball_inside_hole = true
+      ballx_past = ballx
+      break
+     elseif not holes[a] and ballx + 4 >= (a-1)*16 and ballx + 4 <= ((a-1)*16)+16 then
+      _init()
+     end
+    elseif ballx_past != ballx then
+     ball_inside_hole = false
+    end 
+
    end
-   
-  end
  end
 end
 
-function move_ball()
 
+function move_ball()
  if bally >= 119 then
   bally = 119
   on_ground = true
