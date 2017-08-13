@@ -14,12 +14,19 @@ function _init()
  ballx = 64
  bally = 44
  balldx = 5
- balldy = -5
- gravity = 0.5
+ balldy = -6
+ gravity = 0.25
  on_ground = false
  holes = {false,false,false,true,false,false,false,false}
  ball_inside_hole = false
  t=0
+ i=1
+ keys = {"s","f","e","d"}
+ keys_chosen = {}
+ keys_entered_check = {}
+ keys_displayed = false
+ keys_entered = false
+
 end
 
 
@@ -27,18 +34,65 @@ function _update()
  t += 1
  hit_edge()
  move_ball()
- hole_location()
+ check_btn()
+
+ for a=1,#keys_entered_check do
+  if keys_entered_check[a] != keys_chosen[a] then
+   keys_entered_check = {}
+   i=1
+   holes[rnd(8)+1] = true
+   break  
+  end
+ end
+
+ if #keys_entered_check == 4  then
+  keys_entered = true
+  i=1
+ end
+
+ --[[if btnp(0,1) and then 
+  keys_entered=true
+ end]]--
+
+ hole_hit()
+
+ for a=1,8 do
+  if not holes[a] then
+   break
+  elseif a == 8 then
+   stop()
+  end
+ end
+
+ if keys_entered then
+  keys_displayed = false
+
+ end
+
  if t%2 == 0 then
   pal(4,flr(rnd(2)+14))
+ end
+
+ if not keys_displayed then
+  for a=1,4 do
+   key = flr(rnd(4))
+   keys_chosen[a] = key
+  end
+  keys_displayed = true
+
  end
 end
 
 
 function _draw()
- cls()
+ cls(13)
  map(0,0,0,0,16,16)
  hole_light()
  spr(1,ballx,bally)
+ for a=1,4 do
+  local c = a>#keys_entered_check and 8 or 6
+  print(keys[keys_chosen[a]+1],24*a,64, c)
+ end
 end
 
 
@@ -52,20 +106,27 @@ function hole_light()
  end
 end
 
-function hole_location()
+function hole_hit()
  for a = 1, 8 do 
    if on_ground then
     if not ball_inside_hole then
      if holes[a] and ballx + 4 >= (a-1)*16 and ballx + 4 <= ((a-1)*16 )+16 then
-      holes[a] = false
+      if keys_entered then
+       holes[a] = false
+       keys_entered = false
+
+      end
+      random_num = a
      -- player gets one point
+     while random_num == a do
       random_num = flr(rnd(8)) + 1
+     end
       holes[random_num] = true
       ball_inside_hole = true
       ballx_past = ballx
       break
      elseif not holes[a] and ballx + 4 >= (a-1)*16 and ballx + 4 <= ((a-1)*16)+16 then
-      _init()
+      holes[a] = true
      end
     elseif ballx_past != ballx then
      ball_inside_hole = false
@@ -74,6 +135,16 @@ function hole_location()
    end
  end
 end
+
+function check_btn()
+ for a=0,3 do 
+  if btnp(a,1) then
+   keys_entered_check[i] = a
+   i+=1
+  end
+ end
+end
+    
 
 
 function move_ball()
@@ -86,22 +157,20 @@ function move_ball()
  if not on_ground then
   balldy += gravity
   bally += balldy
+ elseif on_ground then
+  if btnp(2,0) then
+   bally += balldy
+   on_ground = false
+  end
  end
 
- if btn(0) then
+ if btn(0,0) then
   ballx -= balldx
  end
 
- if btn(1) then
+ if btn(1,0) then
   ballx += balldx
  end
-
-if on_ground then
- if btnp(2) then
-  bally += balldy
-  on_ground = false
- end
-end
 
  --[[ if btn(3) then
   bally -= balldy
